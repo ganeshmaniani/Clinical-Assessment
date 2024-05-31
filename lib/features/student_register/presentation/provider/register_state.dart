@@ -14,9 +14,7 @@ class RegisterState extends Equatable {
   });
 
   @override
-  List<Object> get props => [
-        isLoading,
-      ];
+  List<Object> get props => [isLoading];
 
   @override
   bool get stringify => true;

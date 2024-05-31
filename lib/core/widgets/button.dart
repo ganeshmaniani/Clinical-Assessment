@@ -5,12 +5,15 @@ class KButton extends StatelessWidget {
   final VoidCallback onTap;
   final String text;
   final bool isIcon;
+  final Color color;
 
-  const KButton(
-      {super.key,
-      required this.onTap,
-      required this.text,
-      this.isIcon = false});
+  const KButton({
+    super.key,
+    required this.onTap,
+    required this.text,
+    this.isIcon = false,
+    this.color = Colors.deepPurple,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +21,10 @@ class KButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 36.h,
-        margin: EdgeInsets.symmetric(horizontal: 16),
+        // margin: EdgeInsets.symmetric(horizontal: 16),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.deepPurple.shade600,
+          color: color,
           borderRadius: BorderRadius.circular(6.r),
         ),
         child: Row(

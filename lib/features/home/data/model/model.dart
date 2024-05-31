@@ -1,0 +1,1 @@
+export 'student_detail_model.dart';

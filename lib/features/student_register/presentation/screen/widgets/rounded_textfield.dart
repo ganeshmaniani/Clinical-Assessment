@@ -9,40 +9,50 @@ class RoundedTextField extends StatelessWidget {
   final bool? obscureText;
   final int maxLine;
   final Widget? right;
-  const RoundedTextField(
-      {super.key,
-      required this.controller,
-      this.type,
-      this.obscureText,
-      this.right,
-      this.maxLine = 1,
-      required this.hintText});
+  final String? Function(String?)? validator;
+  const RoundedTextField({
+    super.key,
+    required this.controller,
+    this.type,
+    this.obscureText,
+    this.right,
+    this.maxLine = 1,
+    required this.hintText,
+    required this.validator,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: maxLine == 1 ? 50.h : null,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(15)),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: TextFormField(
         controller: controller,
         keyboardType: type,
         maxLines: maxLine,
-        // validator: (value) {
-        //   if (value!.isEmpty) {
-        //     return "This field is required";
-        //   }
-        //   return null;
-        // },
+        validator: validator,
         obscureText: obscureText ?? false,
         style: TextStyle(color: AppColor.black, fontSize: 16.sp),
         decoration: InputDecoration(
+            fillColor: AppColor.white,
+            filled: true,
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.transparent),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppColor.primary),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.red),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.red),
+              borderRadius: BorderRadius.circular(15),
+            ),
             hintText: hintText,
             hintStyle: TextStyle(
                 color: AppColor.grey,

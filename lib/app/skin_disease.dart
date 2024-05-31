@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:skin_disease_backup/features/student_register/presentation/screen/register_ui.dart';
-import '../features/home/presentation/screen/home_ui.dart';
 
-class SkinDiseaseApp extends StatelessWidget {
+import '../features/features.dart';
+
+class SkinDiseaseApp extends StatefulWidget {
   const SkinDiseaseApp({super.key});
 
+  @override
+  State<SkinDiseaseApp> createState() => _SkinDiseaseAppState();
+}
+
+class _SkinDiseaseAppState extends State<SkinDiseaseApp> {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -18,10 +23,9 @@ class SkinDiseaseApp extends StatelessWidget {
           theme: ThemeData(
               fontFamily: 'HelveticaNeue',
               textTheme: _TextTheme._textLightTheme),
-          home: child,
+          home: const SplashUI(),
         );
       },
-      child: const RegisterUI(),
     );
   }
 }

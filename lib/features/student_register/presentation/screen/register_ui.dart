@@ -2,19 +2,12 @@ import 'dart:developer';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:skin_disease_backup/core/constants/color_extension.dart';
-import 'package:skin_disease_backup/features/home/presentation/screen/home_ui.dart';
-import 'package:skin_disease_backup/features/student_register/domain/entities/register_entities.dart';
-import 'package:skin_disease_backup/features/student_register/presentation/provider/register_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../config/config.dart';
-import '../../../../core/constants/app_assets.dart';
 import '../../../../core/core.dart';
 import '../../../features.dart';
-import 'widgets/widgets.dart';
 
 class RegisterUI extends ConsumerStatefulWidget {
   const RegisterUI({super.key});
@@ -23,7 +16,8 @@ class RegisterUI extends ConsumerStatefulWidget {
   ConsumerState<RegisterUI> createState() => _RegisterUIConsumerState();
 }
 
-class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
+class _RegisterUIConsumerState extends ConsumerState<RegisterUI>
+    with InputValidationMixin {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   String selectGenderImage = "";
@@ -33,8 +27,31 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
   final studentAgeController = TextEditingController();
   final schoolNameController = TextEditingController();
   bool isLoading = false;
+  bool isGenderValid = true;
+  @override
+  void initState() {
+    super.initState();
+    // initCallUserInOut();
+  }
+
+  initCallUserInOut() async {
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
+    var userName = preferences.getString(DBKeys.dbStudentName);
+    log(userName ?? "");
+    if (userName != '') {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) =>
+                  TabHomeScreen(selectedGenderImage: selectGenderImage)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final errorColor = Theme.of(context).errorColor;
+    final errorStyle = Theme.of(context).inputDecorationTheme.errorStyle ??
+        TextStyle(color: errorColor, fontSize: 16.sp);
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 236, 229, 229),
       body: SingleChildScrollView(
@@ -44,17 +61,31 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                RegisterAppBar(),
+                const RegisterAppBar(),
                 SizedBox(height: 16.h),
                 RoundedTextField(
                   hintText: "Student Name ",
                   controller: studentNameController,
+                  validator: (studentName) {
+                    if (isCheckTextFieldIsEmpty(studentName!)) {
+                      return null;
+                    } else {
+                      return 'Enter a student name';
+                    }
+                  },
                 ),
                 SizedBox(height: 8.h),
                 RoundedTextField(
                   hintText: "Student Age",
                   controller: studentAgeController,
                   type: TextInputType.number,
+                  validator: (studentAge) {
+                    if (isCheckTextFieldIsEmpty(studentAge!)) {
+                      return null;
+                    } else {
+                      return 'Enter a student age';
+                    }
+                  },
                 ),
                 SizedBox(height: 8.h),
                 GestureDetector(
@@ -95,7 +126,7 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width,
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                         color: Colors.white,
@@ -114,18 +145,33 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
                                       fontWeight: FontWeight.w500,
                                       color: AppColor.black,
                                       fontSize: 16.sp)),
-                              Image.asset(
-                                selectGenderImage,
-                                height: 24.h,
-                              )
+                              Image.asset(selectGenderImage, width: 24.h)
                             ],
                           ),
                   ),
                 ),
+                if (!isGenderValid)
+                  Padding(
+                    padding: EdgeInsets.only(left: 36.w, top: 4.h),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Enter a gender",
+                        style: errorStyle,
+                      ),
+                    ),
+                  ),
                 SizedBox(height: 8.h),
                 RoundedTextField(
                   hintText: "School Name",
                   controller: schoolNameController,
+                  validator: (schoolName) {
+                    if (isCheckTextFieldIsEmpty(schoolName!)) {
+                      return null;
+                    } else {
+                      return 'Enter a school name';
+                    }
+                  },
                 ),
                 SizedBox(height: 16.h),
                 isLoading
@@ -134,7 +180,12 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
                         title: 'Register',
                         type: RoundedButtonType.primary,
                         onPressed: () {
-                          if (formKey.currentState!.validate()) {
+                          setState(() {
+                            isGenderValid = selectGender.isNotEmpty;
+                          });
+
+                          if (formKey.currentState!.validate() &&
+                              isGenderValid) {
                             setState(() => isLoading = true);
                             RegisterEntities registerEntities =
                                 RegisterEntities(
@@ -147,11 +198,15 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI> {
                                 .register(registerEntities)
                                 .then((response) => response.fold(
                                         (l) => log(l.message.toString()), (r) {
-                                      Navigator.push(
+                                      Navigator.pushAndRemoveUntil(
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  const TabHomeScreen()));
+                                                  TabHomeScreen(
+                                                      selectedGenderImage:
+                                                          selectGenderImage)),
+                                          (route) => false);
+
                                       setState(() => isLoading = false);
                                     }));
                           }

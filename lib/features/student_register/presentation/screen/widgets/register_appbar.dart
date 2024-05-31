@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:skin_disease_backup/core/constants/color_extension.dart';
 
-import '../../../../../core/core.dart';
-
 class RegisterAppBar extends StatelessWidget {
   const RegisterAppBar({super.key});
 
@@ -35,7 +33,7 @@ class RegisterAppBar extends StatelessWidget {
                 color: Colors.deepPurple.shade100,
                 borderRadius: BorderRadius.circular(12)),
             child: Text(
-              "Clinical assessment of Malnutrition",
+              "Clinical Assessment",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColor.black,

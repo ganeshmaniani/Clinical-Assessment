@@ -31,10 +31,7 @@ class GenderSelectionItem extends StatelessWidget {
                 text,
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
               ),
-              Image.asset(
-                image,
-                height: 26,
-              )
+              Image.asset(image, width: 26.sp)
             ],
           ),
         ),

@@ -24,7 +24,7 @@ class RoundedButton extends StatelessWidget {
           elevation: 0,
           color: type == RoundedButtonType.primary
               ? AppColor.primary
-              : Colors.black,
+              : Colors.white,
           height: 50.h,
           shape: RoundedRectangleBorder(
               side: BorderSide.none, borderRadius: BorderRadius.circular(30)),
@@ -33,7 +33,7 @@ class RoundedButton extends StatelessWidget {
             style: TextStyle(
                 color: type == RoundedButtonType.primary
                     ? AppColor.white
-                    : Colors.black,
+                    : AppColor.primary,
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600),
           ),

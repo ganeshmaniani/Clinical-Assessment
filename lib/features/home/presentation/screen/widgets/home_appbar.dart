@@ -1,39 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:skin_disease_backup/core/constants/color_extension.dart';
+
+import '../../../../../core/core.dart';
+import '../../../../features.dart';
 
 class HomeAppBar extends StatelessWidget {
-  const HomeAppBar({super.key});
+  final String title;
+  final bool isHome;
+  const HomeAppBar({super.key, required this.title, this.isHome = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 20, left: 16, right: 16),
+      padding: EdgeInsets.only(top: 80.h, left: 16, right: 16, bottom: 16).w,
       width: double.infinity,
-      height: MediaQuery.of(context).size.height / 5.h,
       decoration: BoxDecoration(
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(20),
             bottomRight: Radius.circular(20),
           ),
-          color: AppColor.primary
-          // gradient: LinearGradient(
-          //     colors: [Color(0xff886ff2), Color(0xff6849ef)],
-          //     begin: Alignment.topLeft,
-          //     end: Alignment.bottomRight)
-          ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Image.asset(AppAssets.logo, height: 250.h),
+          color: AppColor.primary),
+      child: isHome
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                studentDetailText(
+                    student: title,
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w800),
+                // const Spacer(),
+                IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const StudentListUI()));
+                    },
+                    icon: Icon(Icons.history_sharp, color: AppColor.white)),
+              ],
+            )
+          : Column(
+              children: [
+                // Image.asset(AppAssets.logo, height: 250.h),
 
-          studentDetailText(
-              student: "Clinical assessment of Malnutrition",
-              fontSize: 22.sp,
-              fontWeight: FontWeight.w800),
-        ],
-      ),
+                studentDetailText(
+                    student: title,
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w800),
+              ],
+            ),
     );
   }
 
