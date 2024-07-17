@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'dart:typed_data';
 
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -121,7 +120,7 @@ class _StudentDetailUIConsumerState extends ConsumerState<StudentDetailUI> {
                               .map((data) => StoreScore(
                                     image: data.diseaseImage ?? Uint8List(0),
                                     bodyParts: data.diseaseName ?? "",
-                                    score: data.diseaseScore.toString() ?? "",
+                                    score: data.diseaseScore.toString(),
                                   ))
                               .toList(),
                         )

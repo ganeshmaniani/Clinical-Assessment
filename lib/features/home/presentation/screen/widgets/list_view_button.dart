@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -22,8 +21,7 @@ class Button extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(microseconds: 300),
+      child: Container(
         padding: const EdgeInsets.all(4),
         width: 70.w,
         margin: const EdgeInsets.symmetric(horizontal: 6),

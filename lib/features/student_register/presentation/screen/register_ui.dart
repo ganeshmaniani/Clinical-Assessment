@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +27,7 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI>
   final schoolNameController = TextEditingController();
   bool isLoading = false;
   bool isGenderValid = true;
+  bool isButtonLoading = false;
   @override
   void initState() {
     super.initState();
@@ -174,7 +174,7 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI>
                   },
                 ),
                 SizedBox(height: 16.h),
-                isLoading
+                isButtonLoading
                     ? const CircularProgressIndicator()
                     : RoundedButton(
                         title: 'Register',
@@ -186,7 +186,7 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI>
 
                           if (formKey.currentState!.validate() &&
                               isGenderValid) {
-                            setState(() => isLoading = true);
+                            setState(() => isButtonLoading = true);
                             RegisterEntities registerEntities =
                                 RegisterEntities(
                                     studentName: studentNameController.text,
@@ -196,18 +196,26 @@ class _RegisterUIConsumerState extends ConsumerState<RegisterUI>
                             ref
                                 .read(registerProvider.notifier)
                                 .register(registerEntities)
-                                .then((response) => response.fold(
-                                        (l) => log(l.message.toString()), (r) {
-                                      Navigator.pushAndRemoveUntil(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  TabHomeScreen(
-                                                      selectedGenderImage:
-                                                          selectGenderImage)),
-                                          (route) => false);
-
-                                      setState(() => isLoading = false);
+                                .then((response) => response.fold((l) {
+                                      log(l.message.toString());
+                                      setState(() => isButtonLoading = false);
+                                    }, (r) {
+                                      Future.delayed(const Duration(seconds: 2))
+                                          .then((_) {
+                                        AppAlert.displaySnackBar(context,
+                                            isSuccess: true,
+                                            message: "Register successfull");
+                                        setState(() => isButtonLoading = false);
+                                        log("Update successful");
+                                        Navigator.pushAndRemoveUntil(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    TabHomeScreen(
+                                                        selectedGenderImage:
+                                                            selectGenderImage)),
+                                            (route) => false);
+                                      });
                                     }));
                           }
                         })

@@ -74,6 +74,7 @@ class HomeSourceImpl implements HomeSource {
         // DBKeys.dbColumnId: diseaseUpdateEntities.id,
         DBKeys.dbDiseaseName: diseaseUpdateEntities.diseaseName,
         DBKeys.dbDiseaseScore: diseaseUpdateEntities.diseaseScore,
+        DBKeys.dbDiseaseImage:diseaseUpdateEntities.diseaseImage
       };
       log("Updating data for disease with ID: ${diseaseUpdateEntities.id}");
 

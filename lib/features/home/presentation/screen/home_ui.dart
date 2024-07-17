@@ -1,18 +1,16 @@
 import 'dart:developer';
-import 'dart:typed_data';
 
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:skin_disease_backup/features/home/home.dart';
-import 'package:skin_disease_backup/features/home/presentation/presentation.dart';
-
+import 'package:skin_disease_backup/core/utils/switch_case_controller.dart';
 import '../../../../core/core.dart';
 import '../../../features.dart';
 
@@ -58,11 +56,12 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
     "Nail": {},
   };
   int currentIndex = 0;
-  // int? score;
-  bool isLoading = false;
+  bool isImageLoading = false;
+  bool diseaseLoading = false;
   bool isStudentDetailLoading = false;
-  bool isUpdateButtonEnable = false;
-  bool isDoneClicked = false;
+  bool isUpdate = false;
+  bool isButtonLoading = false;
+  String diseaseDescription = "";
   List<DiseaseDetailModel> diseaseDetailModel = [];
   StudentDetailModel studentDetailModel = StudentDetailModel();
 
@@ -74,7 +73,7 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
   }
 
   initialStudentDetail() {
-    setState(() => isLoading = true);
+    setState(() => isStudentDetailLoading = true);
 
     ref
         .read(homeProvider.notifier)
@@ -84,20 +83,17 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
                 log(l.message);
                 isStudentDetailLoading = false;
               });
-              setState(() => isLoading = false);
             }, (r) {
               setState(() {
-                isStudentDetailLoading = false;
                 studentDetailModel = r;
 
                 isStudentDetailLoading = false;
               });
-              setState(() => isLoading = false);
             }));
   }
 
   initialDiseaseDetail() {
-    setState(() => isLoading = true);
+    setState(() => diseaseLoading = true);
 
     ref
         .read(diseaseDetailProvider.notifier)
@@ -105,13 +101,12 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
         .then((res) => res.fold((l) {
               setState(() {
                 log(l.message);
-                isStudentDetailLoading = false;
+                diseaseLoading = false;
               });
             }, (r) {
               setState(() {
-                isStudentDetailLoading = false;
                 diseaseDetailModel = r;
-                isStudentDetailLoading = false;
+                diseaseLoading = false;
               });
             }));
   }
@@ -126,71 +121,82 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
 
   Widget _buildBody() {
     return SingleChildScrollView(
-      // physics: const NeverScrollableScrollPhysics(),
       child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         const HomeAppBar(title: "Clinical Assessment", isHome: true),
         SizedBox(height: 16.h),
-        StudentDetailContaner(
-          studentName: studentDetailModel.studentName ?? "",
-          studentAge: studentDetailModel.studentAge ?? "",
-          studentGender: studentDetailModel.studentGender ?? "",
-          schoolName: studentDetailModel.studentSchool ?? '',
-          isHome: true,
-          editFunction: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => RegisterEditUI(
-                          selectGenderImage: widget.selectedGenderImage ?? "",
-                          studentDetailModel: studentDetailModel,
-                        ))).whenComplete(() => initialStudentDetail());
-          },
-          deleteFunction: () async {
-            showAlertBox(context,
-                title: "Delete Student Detail",
-                description: "Are you sure?",
-                btnCancelText: "No",
-                btnOkText: "Yes",
-                dialogType: DialogType.warning,
-                animType: AnimType.bottomSlide, btnOkOnPress: () async {
-              final SharedPreferences prefs =
-                  await SharedPreferences.getInstance();
-              var studentId = prefs.getInt(DBKeys.dbColumnId);
-              log("StudentId:${studentId.toString()}");
-              prefs.remove(DBKeys.dbColumnId);
-              Navigator.pushAndRemoveUntil(
-                  // ignore: use_build_context_synchronously
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegisterUI()),
-                  (route) => false);
-            }, btnCancelOnPress: () {});
-          },
-        ),
+        isStudentDetailLoading
+            ? const CircularProgressIndicator()
+            : StudentDetailContaner(
+                studentName: studentDetailModel.studentName ?? "",
+                studentAge: studentDetailModel.studentAge ?? "",
+                studentGender: studentDetailModel.studentGender ?? "",
+                schoolName: studentDetailModel.studentSchool ?? '',
+                isHome: true,
+                editFunction: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => RegisterEditUI(
+                                selectGenderImage:
+                                    widget.selectedGenderImage ?? "",
+                                studentDetailModel: studentDetailModel,
+                              ))).whenComplete(() => initialStudentDetail());
+                },
+                deleteFunction: () async {
+                  showAlertBox(context,
+                      title: "Delete Student Detail",
+                      description: "Are you sure?",
+                      btnCancelText: "No",
+                      btnOkText: "Yes",
+                      dialogType: DialogType.warning,
+                      animType: AnimType.bottomSlide, btnOkOnPress: () async {
+                    final SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
+                    var studentId = prefs.getInt(DBKeys.dbColumnId);
+                    log("StudentId:${studentId.toString()}");
+                    prefs.remove(DBKeys.dbColumnId);
+                    Navigator.pushAndRemoveUntil(
+                        // ignore: use_build_context_synchronously
+                        context,
+                        MaterialPageRoute(builder: (_) => const RegisterUI()),
+                        (route) => false);
+                  }, btnCancelOnPress: () {});
+                },
+              ),
         SizedBox(height: 16.h),
         Container(
           margin: const EdgeInsets.only(left: 16).w,
           height: 36.h,
-          child: ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              shrinkWrap: true,
-              itemCount: diseases.length,
-              itemBuilder: (context, index) {
-                return Button(
-                    currentIndex: currentIndex,
-                    index: index,
-                    onTap: () {
-                      tabBarAction(diseases[index]);
-                      log("Click");
-                    },
-                    text: diseases[index]);
-              }),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 1),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            child: ListView.builder(
+                key: ValueKey<int>(currentIndex),
+                physics: const BouncingScrollPhysics(),
+                scrollDirection: Axis.horizontal,
+                shrinkWrap: true,
+                itemCount: diseases.length,
+                itemBuilder: (context, index) {
+                  return Button(
+                      currentIndex: currentIndex,
+                      index: index,
+                      onTap: () {
+                        // setState(() => currentIndex = index);
+                        tabBarAction(diseases[index]);
+                      },
+                      text: diseases[index]);
+                }),
+          ),
         ),
         SizedBox(height: 16.h),
         Container(
             margin: const EdgeInsets.symmetric(horizontal: 16).w,
             alignment: Alignment.center,
-            // width: double.infinity.w,
             child: _buildImageContainer()),
         SizedBox(height: 50.h),
       ]),
@@ -199,33 +205,41 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
 
   Widget _buildImageContainer() {
     String currentDisease = diseases[currentIndex];
-    // String imagePath = diseaseImages[currentDisease] ?? '';
+
     Map<String, dynamic>? imageData = diseaseImages[currentDisease];
 
     if (imageData == null) {
       return const CircularProgressIndicator(); // or any other loading indicator
     }
     String? imagePath = imageData['path'];
-    // score = imageData['score'] ?? 0;
+    var currentDiseaseDetail = diseaseDetailModel.firstWhere(
+      (diseaseDetail) => diseaseDetail.diseaseName == currentDisease,
+      orElse: () =>
+          DiseaseDetailModel(diseaseName: currentDisease, diseaseImage: null),
+    );
+    isUpdate = currentDiseaseDetail != null &&
+        currentDiseaseDetail.diseaseImage != null;
     bool isNextEnabled = imagePath != null &&
         imagePath.isNotEmpty &&
         getDiseaseControllerWithSwitch(currentIndex).text.isNotEmpty;
-
+    int score =
+        int.tryParse(getDiseaseControllerWithSwitch(currentIndex).text) ?? 0;
+    diseaseDescription = getDiseaseDescription(currentDisease, score);
     return imageData['path'] == null || imageData['path'].isEmpty
         ? Column(
             children: [
-              const EmptyImageContainer(),
-              SizedBox(height: 16.h),
-              KButton(
-                  isIcon: true,
+              GestureDetector(
                   onTap: () =>
                       _showBottomModel(context, disease: currentDisease),
-                  text: "Take"),
+                  child: EmptyImageContainer(
+                    diseaseName: getDiseaseNameWithSwitch(currentIndex),
+                  )),
+              SizedBox(height: 16.h),
             ],
           )
         : Column(
             children: [
-              isLoading
+              isImageLoading
                   ? DottedBorder(
                       borderType: BorderType.RRect,
                       radius: Radius.circular(12.r),
@@ -243,212 +257,210 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
                         ),
                       ),
                     )
-                  : ImageContainer(
-                      title: currentDisease,
-                      path: imagePath ?? '',
-                      disease: currentDisease,
-                      diseaseImages: diseaseImages,
-                      imagePickerUtils: imagePickerUtils,
-                      updateImagePath: updateImagePath,
-                      isLoading: isLoading,
-                      scoreController: eyeController,
+                  : Stack(
+                      children: [
+                        ImageContainer(
+                          path: imagePath ?? '',
+                          disease: currentDisease,
+                          imagePickerUtils: imagePickerUtils,
+                          isLoading: isImageLoading,
+                          scoreController:
+                              getDiseaseControllerWithSwitch(currentIndex),
+                        ),
+                        Positioned(
+                          bottom: 10,
+                          right: 10,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade600,
+                                borderRadius: BorderRadius.circular(6.r)),
+                            child: GestureDetector(
+                              onTap: () {
+                                initialDiseaseDetail();
+                                _showBottomModel(context,
+                                    disease: currentDisease);
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Edit',
+                                    style: TextStyle(color: AppColor.white),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  const Icon(Icons.edit, color: Colors.white)
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
                     ),
               SizedBox(height: 8.h),
               Row(
                 children: [
-                  Expanded(
-                    child: DottedBorder(
-                      borderType: BorderType.RRect,
-                      radius: Radius.circular(12.r),
-                      color: Colors.deepPurple.shade600,
-                      dashPattern: const [8, 4],
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                        // width: MediaQuery.of(context).size.width / 2,
-                        height: 36.h,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.deepPurple.shade100.withOpacity(.8),
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Text(
-                          'Score:',
-                          style: TextStyle(
-                              fontSize: 16.sp, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  ),
+                  ScoreContainer(
+                      child: Text(
+                    'Score:',
+                    style:
+                        TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                  )),
                   SizedBox(width: 8.w),
-                  Expanded(
-                    child: DottedBorder(
-                      borderType: BorderType.RRect,
-                      radius: Radius.circular(12.r),
-                      color: Colors.deepPurple.shade600,
-                      dashPattern: const [8, 4],
-                      padding: const EdgeInsets.all(4),
-                      child: Container(
-                          // width: MediaQuery.of(context).size.width / 2,
-                          height: 36.h,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple.shade100.withOpacity(.8),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: TextField(
-                            controller:
-                                getDiseaseControllerWithSwitch(currentIndex),
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.w600),
-                            decoration: const InputDecoration(
-                                border: InputBorder.none, hintText: "00"),
-                            onChanged: (value) {
-                              setState(() {});
-                            },
-                          )),
-                    ),
-                  ),
+                  ScoreContainer(
+                      child: TextField(
+                    controller: getDiseaseControllerWithSwitch(currentIndex),
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    style:
+                        TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                        border: InputBorder.none, hintText: "Enter Score"),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      RangeTextInputFormatter(min: 1, max: 10),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        int newScore = int.tryParse(value) ?? 0;
+                        diseaseDescription =
+                            getDiseaseDescription(currentDisease, newScore);
+                      });
+                    },
+                  ))
                 ],
               ),
               SizedBox(height: 8.h),
-              KButton(
-                onTap: isNextEnabled
-                    ? () async {
-                        Uint8List? imageBytes =
-                            diseaseImages[diseases[currentIndex]]!['bytes'];
-                        DiseaseEntities diseaseEntities = DiseaseEntities(
-                          diseaseName: getDiseaseNameWithSwitch(currentIndex),
-                          diseaseScore: int.parse(
-                              getDiseaseControllerWithSwitch(currentIndex)
-                                  .text),
-                          diseaseImage: imageBytes,
-                        );
-                        ref
-                            .read(homeProvider.notifier)
-                            .addDisease(diseaseEntities)
-                            .then((response) => response.fold(
-                                    (l) => log(l.message.toString()), (r) {
-                                  log("Add successfullfully");
-                                  setState(() {
-                                    isDoneClicked = true;
-                                    isUpdateButtonEnable = true;
-                                  });
-                                }));
-                      }
-                    : () {},
-                text: "Done",
-                color: isNextEnabled ? Colors.deepPurple.shade600 : Colors.grey,
-              ),
-              KButton(
-                  onTap: isUpdateButtonEnable ? () async {} : () {},
-                  text: "Update"),
+              getDiseaseControllerWithSwitch(currentIndex).text == ""
+                  ? const SizedBox()
+                  : Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Description: ',
+                            style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red),
+                          ),
+                          TextSpan(
+                            text: diseaseDescription,
+                            style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
               SizedBox(height: 8.h),
-              // currentIndex == 0
-              //     ? KButton(
-              //         onTap: isUpdateButtonEnable
-              //             ? () {
-              //                 if (currentIndex == 0) {
-              //                   setState(() {
-              //                     currentIndex++;
-              //                     isDoneClicked = false;
-              //                     isUpdateButtonEnable =
-              //                         getDiseaseControllerWithSwitch(
-              //                                 currentIndex)
-              //                             .text
-              //                             .isNotEmpty;
-              //                   });
-              //                 }
-              //               }
-              //             : () {},
-              //         text: 'Next',
-              //         color: isUpdateButtonEnable
-              //             ? Colors.deepPurple.shade600
-              //             : Colors.grey)
-              //     :
+              if (isUpdate)
+                isButtonLoading
+                    ? const CircularProgressIndicator()
+                    : KButton(
+                        onTap: isNextEnabled
+                            ? () async {
+                                setState(() => isButtonLoading = true);
+                                Uint8List? imageBytes = diseaseImages[
+                                    diseases[currentIndex]]!['bytes'];
+                                DiseaseUpdateEntities diseaseUpdateEntities =
+                                    DiseaseUpdateEntities(
+                                        id: getCustomId(diseases[currentIndex]),
+                                        diseaseName: getDiseaseNameWithSwitch(
+                                            currentIndex),
+                                        diseaseScore: int.parse(
+                                            getDiseaseControllerWithSwitch(
+                                                    currentIndex)
+                                                .text),
+                                        diseaseImage: imageBytes);
+                                final response = ref
+                                    .read(homeProvider.notifier)
+                                    .updateDisease(diseaseUpdateEntities);
+                                response.then((response) => response.fold((l) {
+                                      log(l.message.toString());
+                                      setState(() => isButtonLoading = false);
+                                    }, (r) {
+                                      Future.delayed(const Duration(seconds: 2))
+                                          .then((_) {
+                                        AppAlert.displaySnackBar(context,
+                                            isSuccess: true,
+                                            message: "Update successful");
+                                        setState(() => isButtonLoading = false);
+                                        log("Update successful");
+                                      });
+                                    }));
+                              }
+                            : () {},
+                        text: "Update",
+                        color: isNextEnabled
+                            ? Colors.deepPurple.shade600
+                            : Colors.grey,
+                      ),
+              if (!isUpdate)
+                isButtonLoading
+                    ? const CircularProgressIndicator()
+                    : KButton(
+                        onTap: isNextEnabled
+                            ? () async {
+                                setState(() => isButtonLoading = true);
+                                Uint8List? imageBytes = diseaseImages[
+                                    diseases[currentIndex]]!['bytes'];
+                                DiseaseEntities diseaseEntities =
+                                    DiseaseEntities(
+                                  diseaseName:
+                                      getDiseaseNameWithSwitch(currentIndex),
+                                  diseaseScore: int.parse(
+                                      getDiseaseControllerWithSwitch(
+                                              currentIndex)
+                                          .text),
+                                  diseaseImage: imageBytes,
+                                );
+                                ref
+                                    .read(homeProvider.notifier)
+                                    .addDisease(diseaseEntities)
+                                    .then((response) => response.fold((l) {
+                                          log(l.message.toString());
+                                          setState(
+                                              () => isButtonLoading = false);
+                                        }, (r) {
+                                          initialDiseaseDetail();
+                                          Future.delayed(
+                                                  const Duration(seconds: 2))
+                                              .then((_) {
+                                            AppAlert.displaySnackBar(context,
+                                                isSuccess: true,
+                                                message:
+                                                    "${getDiseaseNameWithSwitch(currentIndex)} Add successfull");
+                                            setState(() {
+                                              isButtonLoading = false;
+                                              currentIndex++;
+                                            });
+                                            log("Add successfull");
+                                          });
+                                        }));
+                              }
+                            : () {},
+                        text: "Done",
+                        color: isNextEnabled
+                            ? Colors.deepPurple.shade600
+                            : Colors.grey,
+                      ),
+              SizedBox(height: 8.h),
               if (currentIndex == 8)
                 KButton(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => ResultScreen(
-                                  id: studentDetailModel.id ?? 0)));
-                    },
-                    text: 'Submit')
-              // : Row(
-              //     children: [
-              //       if (currentIndex > 0)
-              //         Expanded(
-              //           child: KButton(
-              //               onTap: () {
-              //                 setState(() {
-              //                   currentIndex--;
-              //                   isDoneClicked = false;
-              //                   isUpdateButtonEnable =
-              //                       getDiseaseControllerWithSwitch(
-              //                               currentIndex)
-              //                           .text
-              //                           .isNotEmpty;
-              //                 });
-              //               },
-              //               text: 'Back'),
-              //         ),
-              //       SizedBox(width: 16.w),
-              //       if (currentIndex < diseases.length - 1)
-              //         Expanded(
-              //           child: KButton(
-              //               onTap: isUpdateButtonEnable
-              //                   ? () {
-              //                       setState(() {
-              //                         currentIndex++;
-              //                         isDoneClicked = false;
-              //                         isUpdateButtonEnable =
-              //                             getDiseaseControllerWithSwitch(
-              //                                     currentIndex)
-              //                                 .text
-              //                                 .isNotEmpty;
-              //                       });
-              //                     }
-              //                   : () {},
-              //               text: 'Next',
-              //               color: isUpdateButtonEnable
-              //                   ? Colors.deepPurple.shade600
-              //                   : Colors.grey),
-              //         )
-              //     ],
-              //   ),
+                    onTap: isUpdate
+                        ? () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => ResultScreen(
+                                        id: studentDetailModel.id ?? 0)));
+                          }
+                        : () {},
+                    text: 'Submit',
+                    color: isUpdate ? Colors.deepPurple.shade600 : Colors.grey)
             ],
           );
-  }
-
-  String getDiseaseNameWithSwitch(int index) {
-    switch (index) {
-      case 0:
-        return "Eye";
-      case 1:
-        return "Mouth";
-      case 2:
-        return "Tongue";
-      case 3:
-        return "Gums";
-      case 4:
-        return "Teeth";
-      case 5:
-        return "Hair";
-      case 6:
-        return "Skin";
-      case 7:
-        return "Elbow";
-      case 8:
-        return "Nail";
-      // case 9:
-      //   return "Eye";
-
-      default:
-        return "Unknown";
-    }
   }
 
   TextEditingController getDiseaseControllerWithSwitch(int index) {
@@ -477,24 +489,6 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
     }
   }
 
-  void updateImagePath(String disease, String? imagePath, int score) async {
-    setState(() {
-      isLoading = true; // Set loading state to true when updating image
-    });
-    await Future.delayed(const Duration(seconds: 2));
-    if (imagePath != null) {
-      setState(() {
-        diseaseImages[disease] = {'path': imagePath, 'score': score};
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading =
-            false; // Set loading state back to false if image update fails
-      });
-    }
-  }
-
   void _showBottomModel(BuildContext context, {required String disease}) {
     showModalBottomSheet<void>(
       context: context,
@@ -508,12 +502,10 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
             children: [
               CaptureImageButton(
                 onPressed: () => captureImage(disease, ImageSource.camera),
-                //  context.read<ScannerCubit>().captureCameraImage,
                 icon: Icons.camera,
               ),
               CaptureImageButton(
                 onPressed: () => captureImage(disease, ImageSource.gallery),
-                //  context.read<ScannerCubit>().captureGalleryImage,
                 icon: Icons.photo_album,
               ),
             ],
@@ -524,38 +516,23 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
   }
 
   captureImage(String disease, ImageSource source) async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isImageLoading = true);
     XFile? imageFile = await _getImageFromSource(source);
     if (imageFile != null) {
-      // int score = 1 + DateTime.now().microsecondsSinceEpoch % 5;
       Uint8List imageBytes = await imageFile.readAsBytes();
       setState(() {
-        diseaseImages[disease] = {
-          'path': imageFile.path,
-          'bytes': imageBytes
-          // 'score': int.parse(scoreController.text)
-        };
-        // print(diseaseImages[disease] = imageFile.path);
+        diseaseImages[disease] = {'path': imageFile.path, 'bytes': imageBytes};
+        if (isUpdate) {
+          getDiseaseControllerWithSwitch(currentIndex).clear();
+        }
       });
-      // DiseaseEntities diseaseEntities = DiseaseEntities(
-      //     diseaseName: disease, diseaseScore: int.parse(scoreController.text));
-      // ref.read(homeProvider.notifier).addDisease(diseaseEntities).then(
-      //     (response) => response.fold((l) => log(l.message.toString()), (r) {
-      //           log("Add successfullfully");
-      //         }));
     } else {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isImageLoading = false);
     }
     if (!mounted) return;
     Navigator.pop(context);
     await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      isLoading = false;
-    });
+    setState(() => isImageLoading = false);
   }
 
   Future<XFile?> _getImageFromSource(ImageSource source) async {
@@ -579,7 +556,7 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
         break;
       case "Mouth":
         if (diseaseImages['Eye'] != null &&
-            diseaseImages['Eye']!['path'] != null) {
+            diseaseImages['Eye']!['bytes'] != null) {
           setState(() => currentIndex = 1);
         }
         break;
@@ -626,40 +603,5 @@ class _TabHomeScreenConsumerState extends ConsumerState<TabHomeScreen> {
         }
         break;
     }
-  }
-}
-
-class CustomButton extends StatelessWidget {
-  final String title;
-  final VoidCallback? onPressed;
-
-  const CustomButton({super.key, required this.title, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36.h,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 16).w,
-          backgroundColor: onPressed != null
-              ? AppColor.primary
-              : AppColor.primary.withOpacity(.1),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: onPressed != null ? AppColor.white : AppColor.black,
-          ),
-        ),
-      ),
-    );
   }
 }

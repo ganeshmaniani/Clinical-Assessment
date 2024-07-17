@@ -36,8 +36,8 @@ class StudentDetailSourceImpl implements StudentDetailSource {
           await baseCRUDDataBaseServices.getData(DBKeys.dbStudentTable);
       log(response.toString());
       List<StudentDetailModel> studentDetails =
-          response.map((data) => StudentDetailModel.fromJson(data)).toList();
-      log(studentDetails.toString());
+            response.map((data) => StudentDetailModel.fromJson(data)).toList();
+        log(studentDetails.toString());
       if (response.isNotEmpty) {
         final SharedPreferences prefs = await SharedPreferences.getInstance();
         final int currentUserId = prefs.getInt(DBKeys.dbColumnId) ?? -1;

@@ -1,6 +1,4 @@
-import 'dart:async';
-import 'dart:ui';
-
+ 
 import 'package:equatable/equatable.dart';
 
 class RegisterEditEntities extends Equatable {

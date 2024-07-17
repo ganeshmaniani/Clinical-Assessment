@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features.dart';
 
-final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
+final   homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
   final useCaseStudentDetail = ref.watch(studentDetailUseCaseProvider);
   final useCaseDiseaseDetail = ref.watch(addDiseaseUseCaseProviser);
   final useCaseUpdateDiseaseDetail = ref.watch(updateDiseaseUseCaseProviser);

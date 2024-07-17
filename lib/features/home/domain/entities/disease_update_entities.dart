@@ -1,30 +1,37 @@
-  import 'package:equatable/equatable.dart';
+import 'dart:typed_data';
 
-  class DiseaseUpdateEntities extends Equatable {
-    final int id;
-    final String diseaseName;
-    final int diseaseScore;
+import 'package:equatable/equatable.dart';
 
-    const DiseaseUpdateEntities(
-        {required this.id,
-        required this.diseaseName,
-        required this.diseaseScore});
+class DiseaseUpdateEntities extends Equatable {
+  final int id;
+  final String diseaseName;
+  final int diseaseScore;
+  final Uint8List? diseaseImage;
 
-    @override
-    List<Object?> get props => [id, diseaseName, diseaseScore];
+  const DiseaseUpdateEntities({
+    required this.id,
+    required this.diseaseName,
+    required this.diseaseScore,
+    this.diseaseImage,
+  });
 
-    @override
-    bool get stringify => true;
+  @override
+  List<Object?> get props => [id, diseaseName, diseaseScore, diseaseImage];
 
-    DiseaseUpdateEntities copyWith({
-      final int? id,
-      final String? diseaseName,
-      final int? diseaseScore,
-    }) {
-      return DiseaseUpdateEntities(
-        id: id ?? this.id,
-        diseaseName: diseaseName ?? this.diseaseName,
-        diseaseScore: diseaseScore ?? this.id,
-      );
-    }
+  @override
+  bool get stringify => true;
+
+  DiseaseUpdateEntities copyWith({
+    final int? id,
+    final String? diseaseName,
+    final int? diseaseScore,
+    Uint8List? diseaseImage,
+  }) {
+    return DiseaseUpdateEntities(
+      id: id ?? this.id,
+      diseaseName: diseaseName ?? this.diseaseName,
+      diseaseScore: diseaseScore ?? this.id,
+      diseaseImage: diseaseImage ?? this.diseaseImage,
+    );
   }
+}

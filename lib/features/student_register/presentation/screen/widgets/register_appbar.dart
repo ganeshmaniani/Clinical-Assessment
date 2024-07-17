@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:skin_disease_backup/core/constants/app_assets.dart';
 import 'package:skin_disease_backup/core/constants/color_extension.dart';
 
 class RegisterAppBar extends StatelessWidget {
@@ -25,24 +26,18 @@ class RegisterAppBar extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Image.asset(AppAssets.logo, height: 250.h),
-          const Spacer(),
+          // Image.asset(AppAssets.appIcon, height: 150.h),
           Container(
-            padding: const EdgeInsets.all(8),
+            height: 150.h,
+            width: 150.w,
             decoration: BoxDecoration(
-                color: Colors.deepPurple.shade100,
-                borderRadius: BorderRadius.circular(12)),
-            child: Text(
-              "Clinical Assessment",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColor.black,
-                fontSize: 28.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                    image: const AssetImage(AppAssets.appIcon),
+                    fit: BoxFit.cover,
+                    scale: 100.sp)),
           ),
-          const Spacer(),
+          SizedBox(height: 16.h),
           Text(
             "General Information",
             textAlign: TextAlign.center,

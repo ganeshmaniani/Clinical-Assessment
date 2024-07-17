@@ -4,3 +4,4 @@ export 'student_detail_container.dart';
 export 'capture_image_button.dart';
 export 'list_view_button.dart';
 export 'empty_image_container.dart';
+export 'score_container.dart';

@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 mixin InputValidationMixin {
   bool isPasswordValid(String password) => password.length >= 8;
 
@@ -11,4 +13,32 @@ mixin InputValidationMixin {
       newPassword == conformPassword;
 
   bool isCheckTextFieldIsEmpty(String val) => val.isNotEmpty;
+}
+
+class RangeTextInputFormatter extends TextInputFormatter {
+  final int min;
+  final int max;
+
+  RangeTextInputFormatter({required this.min, required this.max});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final int? newInt = int.tryParse(newValue.text);
+    if (newInt == null) {
+      return oldValue;
+    }
+
+    if (newInt < min || newInt > max) {
+      return oldValue;
+    }
+
+    return newValue;
+  }
 }
